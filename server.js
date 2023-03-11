@@ -8,8 +8,14 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
+
+import userRouter from './routes/users.js';
+import authRouter from './routes/auth.js';
+
 // Importing database connection file
 import db from './config/database.js'
+
+
 
 // Initializing Express server
 const server = express();
@@ -36,6 +42,7 @@ server.use(cors());
 
 // Route for root directory
 server.get('/', (req, res) => res.send('Hello World!'));
+server.use('/users', userRouter);
 
 // Starting the Express server
 server.listen(port, () => console.log('Example server listening on port ', port));
