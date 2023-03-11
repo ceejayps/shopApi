@@ -1,15 +1,11 @@
-const db = require('./config/database');
+import express from 'express';
+const server = express();
 
-const express = require('express');
-const app = express();
-
-app.get('/', async (req, res) => {
-  const result = await db.query('SELECT ::text as message', ['Hello, World!']);
-  const message = result.rows[0].message;
-  res.send(message);
+server.get('/', async (req, res) => {
+  
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
+server.listen(port, () => {
   console.log('Server listening on port ' + port);
 });
