@@ -7,20 +7,25 @@ mkdir controllers models routes public utils
 mkdir config
 touch config/database.js
 
-# Add PostgreSQL connection to database.js
-echo "const { Pool } = require('pg');" >> config/database.js
-echo "" >> config/database.js
-echo "const pool = new Pool({" >> config/database.js
-echo "  user: process.env.DB_USER," >> config/database.js
-echo "  host: process.env.DB_HOST," >> config/database.js
-echo "  database: process.env.DB_DATABASE," >> config/database.js
-echo "  password: process.env.DB_PASSWORD," >> config/database.js
-echo "  port: process.env.DB_PORT," >> config/database.js
-echo "});" >> config/database.js
-echo "" >> config/database.js
-echo "module.exports = {" >> config/database.js
-echo "  query: (text, params) => pool.query(text, params)," >> config/database.js
-echo "};" >> config/database.js
+# Add database.js
+touch config/database.js
+
+# Add MongoDB connection code to database.js
+echo "import mongoose from 'mongoose';
+const db = async () => {
+  try {
+    const connection = await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`MongoDB connected to ${connection.connection.host}`);
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+};
+
+export default db;" > config/database.js
 
 # Create the env file
 touch .env
@@ -31,37 +36,82 @@ echo "DB_PASSWORD=password" >> .env
 echo "DB_HOST=localhost" >> .env
 echo "DB_PORT=5432" >> .env
 echo "DB_DATABASE=mydatabase" >> .env
+echo "MONGODB_URI=mongodb://localhost/demoApp"
 
 # Create the views directory
 mkdir views
 
-# Create the package.json file
+#!/bin/bash
+
+# Initialize the project with npm init
 npm init -y
 
-# Install express and pg
-npm install express pg
+# Set the type field to module in the package.json file
+npm config set type module
+
+# Install the required packages
+npm install bcrypt body-parser cors dotenv express helmet jsonwebtoken morgan pg --save
+
+npm install nodemon --save-dev
+
+# Add nodemon script to package.json
+npm set-script dev "nodemon server.js"
+
 
 # Create the server.js file
 touch server.js
 
 # Add PostgreSQL connection import to server.js
-echo "const db = require('./config/database');" >> server.js
-echo "" >> server.js
 
-# Add the Express server to server.js
-echo "const express = require('express');" >> server.js
-echo "const app = express();" >> server.js
-echo "" >> server.js
-echo "app.get('/', async (req, res) => {" >> server.js
-echo "  const result = await db.query('SELECT $1::text as message', ['Hello, World!']);" >> server.js
-echo "  const message = result.rows[0].message;" >> server.js
-echo "  res.send(message);" >> server.js
-echo "});" >> server.js
-echo "" >> server.js
-echo "const port = process.env.PORT || 3000;" >> server.js
-echo "app.listen(port, () => {" >> server.js
-echo "  console.log('Server listening on port ' + port);" >> server.js
-echo "});" >> server.js
+echo "Creating the server.js file..."
+
+# Create the server.js file
+touch server.js
+
+echo "// Importing necessary modules
+import express from 'express';
+import morgan from 'morgan';
+import helmet from 'helmet';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+// Importing database connection file
+import db from './config/database.js'
+
+// Initializing Express server
+const server = express();
+
+// Setting port
+const port = process.env.PORT ?? 3000;
+
+// Configuring environment variables
+dotenv.config();
+
+// Using security-related middlewares
+server.use(helmet());
+server.use(helmet.crossOriginResourcePolicy({policy:'cross-origin'}));
+
+// Using middlewares for body parsing
+server.use(bodyParser.json());
+server.use(bodyParser.urlencoded({extended:false}));
+
+// Using morgan for logging HTTP requests
+server.use(morgan('dev'));
+
+// Using CORS
+server.use(cors());
+
+// Route for root directory
+server.get('/', (req, res) => res.send('Hello World!'));
+
+// Starting the Express server
+server.listen(port, () => console.log('Example server listening on port ', port));
+
+" > server.js
+
 
 # Create the bin/www file
 mkdir bin
@@ -82,3 +132,4 @@ git init
 # Create a .gitignore file
 echo "node_modules" >> .gitignore
 echo ".env" >> .gitignore
+npm run dev
